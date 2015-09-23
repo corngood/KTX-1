@@ -115,6 +115,7 @@ struct commandOptions {
 	bool		 luminance;
 	bool		 mipmap;
 	bool		 sized;
+	bool		 srgb;
 	bool		 useStdin;
 	bool		 lower_left_maps_to_s0t0;
 	_TCHAR*		 outfile;
@@ -173,6 +174,8 @@ usage(_TCHAR* appName)
 		"  --sized      Set the texture's internal format to a sized format based on\n"
 		"               the component size of the input file. Otherwise set it to an\n"
 		"               unsized internal format.\n"
+		"  --srgb       Use sRGB colour space for internal format when possible.\n"
+		"               (LUMINANCE, RGB, RGBA)\n"
         "  --upper_left_maps_to_s0t0\n"
 		"               Map the logical upper left corner of the image to s0,t0.\n"
 		"               Although opposite to the OpenGL convention, this is the DEFAULT\n"
@@ -353,6 +356,16 @@ int _tmain(int argc, _TCHAR* argv[])
 					    /* If we get here there's a bug in readPAM */
 					    assert(0);
 					}
+					if (options.srgb) {
+						switch (tinfo.glInternalFormat) {
+						  case GL_LUMINANCE8: tinfo.glInternalFormat = GL_SLUMINANCE8; break;
+						  case GL_LUMINANCE: tinfo.glInternalFormat = GL_SLUMINANCE; break;
+						  case GL_RGB8: tinfo.glInternalFormat = GL_SRGB8; break;
+						  case GL_RGB: tinfo.glInternalFormat = GL_SRGB; break;
+						  case GL_RGBA8: tinfo.glInternalFormat = GL_SRGB8_ALPHA8; break;
+						  case GL_RGBA: tinfo.glInternalFormat = GL_SRGB_ALPHA; break;
+						}
+					}
 					tinfo.pixelWidth = levelWidth = w;
 					tinfo.pixelHeight = levelHeight = h;
 					tinfo.pixelDepth = 0;
@@ -473,6 +486,7 @@ static void processCommandLine(int argc, _TCHAR* argv[], struct commandOptions& 
 	options.luminance = false;
 	options.mipmap = false;
 	options.sized = false;
+	options.srgb = false;
 	options.outfile = 0;
 	options.numInputFiles = 0;
 	options.firstInfileIndex = 0;
@@ -590,6 +604,8 @@ processOption(const _TCHAR* option, struct commandOptions& options)
 			options.luminance = true;
 		} else if (_tcscmp(&option[2], "sized") == 0) {
 			options.sized = true;
+		} else if (_tcscmp(&option[2], "srgb") == 0) {
+			options.srgb = true;
 		} else if (_tcscmp(&option[2], "upper_left_maps_to_s0t0") == 0) {
 			options.lower_left_maps_to_s0t0 = false;
 		} else if (_tcscmp(&option[2], "lower_left_maps_to_s0t0") == 0) {
